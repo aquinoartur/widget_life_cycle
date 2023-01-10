@@ -86,7 +86,7 @@ class ScreenLifecyleState extends State<ScreenLifecyle>
         print('appLifeCycleState paused');
         break;
       case AppLifecycleState.detached:
-        print('appLifeCycleState suspending');
+        print('appLifeCycleState detached');
         break;
       default:
         break;
@@ -100,7 +100,6 @@ class ScreenLifecyleState extends State<ScreenLifecyle>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(),
-      backgroundColor: Colors.cyan,
     );
   }
 }

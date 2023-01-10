@@ -2,8 +2,6 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 
-import '../main.dart';
-
 class RouteAwareWidget extends StatefulWidget {
   const RouteAwareWidget({super.key});
 
@@ -11,19 +9,34 @@ class RouteAwareWidget extends StatefulWidget {
   State<RouteAwareWidget> createState() => RouteAwareWidgetState();
 }
 
-class RouteAwareWidgetState extends State<RouteAwareWidget> with RouteAware {
+class RouteAwareWidgetState extends State<RouteAwareWidget>
+    with RouteAware, WidgetsBindingObserver {
+  // WIDGET LIFE CYCLE
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    routeObserver.subscribe(this, ModalRoute.of(context) as PageRoute);
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   void dispose() {
-    routeObserver.unsubscribe(this);
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
+  @override
+  void setState(fn) {
+    log('Houve atualização de dados');
+    super.setState(fn);
+  }
+
+  // ROUTE AWARE
   @override
   void didPush() {
     log('DID PUSH: esta tela está visível');
@@ -50,12 +63,32 @@ class RouteAwareWidgetState extends State<RouteAwareWidget> with RouteAware {
     // Chamado quando a rota principal foi exibida e a rota atual é exibida.
   }
 
+  int count = 0;
+
   @override
   Widget build(BuildContext context) => Scaffold(
-        body: Center(
-          child: TextButton(
-            onPressed: () => Navigator.pushNamed(context, '/life-cycle'),
-            child: const Text('GO TO NEXT PAGE'),
+        body: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Center(
+              child: TextButton(
+                onPressed: () => Navigator.pushNamed(context, '/life-cycle'),
+                child: const Text('GO TO NEXT PAGE'),
+              ),
+            ),
+          ],
+        ),
+        floatingActionButton: IconButton(
+          onPressed: () {
+            setState(() {
+              count++;
+            });
+            log(count.toString());
+          },
+          icon: const Icon(Icons.add),
+          style: IconButton.styleFrom(
+            backgroundColor: Colors.purple,
           ),
         ),
       );
