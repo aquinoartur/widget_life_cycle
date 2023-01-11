@@ -2,6 +2,8 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 
+import '../main.dart';
+
 class RouteAwareWidget extends StatefulWidget {
   const RouteAwareWidget({super.key});
 
@@ -11,32 +13,94 @@ class RouteAwareWidget extends StatefulWidget {
 
 class RouteAwareWidgetState extends State<RouteAwareWidget>
     with RouteAware, WidgetsBindingObserver {
-  // WIDGET LIFE CYCLE
-
+  //* WIDGET LIFE CYCLE
   @override
   void initState() {
+    /*
+     Mounted = true: quando createState cria sua classe de estado, um buildContext é atribuído a esse estado.
+     BuildContext é, excessivamente simplificado, o local na árvore de widgets em que este widget é colocado.
+     Cada widget têm uma propriedade bool this.mounted. Ele se torna verdadeiro quando o buildContext é atribuído.
+     É um erro chamar setState quando um widget é desmontado.
+     Mounted = false: o objeto de estado nunca pode ser remontado e um erro é gerado quando setState é chamado.
+  */
+
+    WidgetsBinding.instance.addObserver(this);
     super.initState();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    WidgetsBinding.instance.addObserver(this);
+    routeObserver.subscribe(this, ModalRoute.of(context) as PageRoute);
+    // Este método é chamado imediatamente após initState na primeira vez que
+    //o widget é construído.
   }
 
   @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
+  void didUpdateWidget(covariant RouteAwareWidget oldWidget) {
+    /*
+     Se o widget pai mudar e precisar reconstruir este widget (porque ele precisa fornecer dados diferentes),
+     mas está sendo reconstruído com o mesmo runtimeType, esse método é chamado.
+     Isso ocorre porque o Flutter está reutilizando o estado, que é de longa duração.
+     Nesse caso, você pode querer inicializar alguns dados novamente, como faria em initState.
+     */
+
+    super.didUpdateWidget(oldWidget);
   }
 
   @override
   void setState(fn) {
     log('Houve atualização de dados');
+    // Chamado quando o método setState é executado
+
     super.setState(fn);
   }
 
-  // ROUTE AWARE
+  @override
+  void deactivate() {
+    /*
+     Deactivate é chamado quando State é removido da árvore,
+     mas pode ser reinserido antes que a alteração do quadro atual seja concluída.
+     Esse método existe basicamente porque os objetos State podem ser movidos de um ponto a outro em uma árvore.
+     */
+    super.deactivate();
+  }
+
+  @override
+  void dispose() {
+    // WidgetsBinding.instance.removeObserver(this);
+    /*
+     Dispose é chamado quando o objeto State é removido, o que é permanente.
+     Este método é onde você deve cancelar a assinatura e cancelar todas as animações, streams, etc.
+     */
+    // routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  //* APP LIFE CYCLE
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    switch (state) {
+      case AppLifecycleState.inactive:
+        log('appLifeCycleState inactive');
+        break;
+      case AppLifecycleState.resumed:
+        log('appLifeCycleState resumed');
+        // Aqui pode-se fazer um refresh de dados etc
+        break;
+      case AppLifecycleState.paused:
+        log('appLifeCycleState paused');
+        break;
+      case AppLifecycleState.detached:
+        log('appLifeCycleState detached');
+        break;
+      default:
+        break;
+    }
+  }
+
+  //* ROUTE AWARE
   @override
   void didPush() {
     log('DID PUSH: esta tela está visível');
@@ -80,13 +144,8 @@ class RouteAwareWidgetState extends State<RouteAwareWidget>
           ],
         ),
         floatingActionButton: IconButton(
-          onPressed: () {
-            setState(() {
-              count++;
-            });
-            log(count.toString());
-          },
-          icon: const Icon(Icons.add),
+          onPressed: () {},
+          icon: const Icon(Icons.refresh),
           style: IconButton.styleFrom(
             backgroundColor: Colors.purple,
           ),
