@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import '../main.dart';
 
 class RouteAwareWidget extends StatefulWidget {
-  const RouteAwareWidget({super.key});
+  final String parametro;
+
+  const RouteAwareWidget({super.key, this.parametro = ''});
 
   @override
   State<RouteAwareWidget> createState() => RouteAwareWidgetState();
@@ -25,27 +27,52 @@ class RouteAwareWidgetState extends State<RouteAwareWidget>
   */
 
     WidgetsBinding.instance.addObserver(this);
+    log('initState foi executado');
     super.initState();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    log('didChangeDependencies foi executado');
     routeObserver.subscribe(this, ModalRoute.of(context) as PageRoute);
-    // Este método é chamado imediatamente após initState na primeira vez que
-    //o widget é construído.
+    // Este método é chamado quando uma dependência do objeto State muda ou imediatamente após initState()
+    //ou seja, quando o widget é construído.
+    // Exemplos de uso:
+    // Provider.of<>(context)
+    // MediaQuery.of(context)
+    // Theme.of(context)
   }
 
   @override
   void didUpdateWidget(covariant RouteAwareWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
     /*
-     Se o widget pai mudar e precisar reconstruir este widget (porque ele precisa fornecer dados diferentes),
+     Se o widget pai mudar e precisar reconstruir este widget (porque ele precisa fornecer dados diferentes, por exemplo de argumentos do construtor),
      mas está sendo reconstruído com o mesmo runtimeType, esse método é chamado.
      Isso ocorre porque o Flutter está reutilizando o estado, que é de longa duração.
      Nesse caso, você pode querer inicializar alguns dados novamente, como faria em initState.
      */
-
-    super.didUpdateWidget(oldWidget);
+    // aqui, podemos executar alguma lógica os parâmetros que recebemos via construtor
+    // por exemplo:
+    if (oldWidget.parametro != widget.parametro) {
+      log("os parâmetros mudaram");
+      // oldWidget te traz a configuração widget antiga, antes do pai desse widget e o mesmo terem sido reconstruídos
+      log(oldWidget.parametro);
+      // widget te traz a configuração atual, com os valor atual dos parâmetros recebidos via construtor
+      log(widget.parametro);
+    }
+    /*
+    Um bom exemplo de uso seria para reiniciar animações
+      @override
+      void didUpdateWidget(Foo oldWidget) {
+        super.didUpdateWidget(oldWidget);
+        _controller.duration = widget.duration;
+      }
+    Dentro didUpdateWidgetdo , a duração do controlador de animação (tempo restante para a animação) é substituída/atualizada pela Stateduração do Widget.
+    A duração do controlador é configurada a partir de uma propriedade no widget Foo; conforme isso muda, o método State.didUpdateWidget é usado para atualizar o controlador.
+    Isso significa que quando parametro é reconstruído com um novo duration , o controlador de animação é atualizado com esse valor, em vez de ficar preso com a duração definida em initState, o original widget.duration.
+    */
   }
 
   @override
