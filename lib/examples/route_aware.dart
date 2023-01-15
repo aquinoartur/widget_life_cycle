@@ -69,9 +69,41 @@ class RouteAwareWidgetState extends State<RouteAwareWidget>
         super.didUpdateWidget(oldWidget);
         _controller.duration = widget.duration;
       }
-    Dentro didUpdateWidgetdo , a duração do controlador de animação (tempo restante para a animação) é substituída/atualizada pela Stateduração do Widget.
-    A duração do controlador é configurada a partir de uma propriedade no widget Foo; conforme isso muda, o método State.didUpdateWidget é usado para atualizar o controlador.
-    Isso significa que quando parametro é reconstruído com um novo duration , o controlador de animação é atualizado com esse valor, em vez de ficar preso com a duração definida em initState, o original widget.duration.
+Dentro didUpdateWidgetdo , a duração do controlador de animação (tempo restante para a animação) é substituída/atualizada pela Stateduração do Widget.
+A duração do controlador é configurada a partir de uma propriedade no widget Foo; conforme isso muda, o método State.didUpdateWidget é usado para atualizar o controlador.
+Isso significa que quando parametro é reconstruído com um novo duration , o controlador de animação é atualizado com esse valor, em vez de ficar preso com a duração definida em initState, o original widget.duration
+
+Outro exemplo seria para assinaturas do tipo ChangeNotifier ou Streams:
+
+Por exemplo, com StreamBuilder, uma primeira compilação pode ser semelhante a:
+
+  StreamBuilder(
+    stream: Stream.value(42),
+    builder: ...
+  )
+
+  E então algo muda e StreamBuilderé reconstruído com
+
+  StreamBuilder(
+    stream: Stream.value(21 ),
+    builder: ...
+  )
+
+  Nesse caso, streammudou. Portanto, StreamBuilderprecisa parar de ouvir o anterior Streame ouvir o novo.
+  Isso seria feito através do seguinte didUpdateWidget:
+
+  StreamSubscription<T> subscription;
+
+  @override
+  void didUpdateWidget(StreamBuilder<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.stream != oldWidget.stream) {
+      subscription?.cancel();
+      subscription = widget.stream?.listen(...);
+    }
+  }
+
+  A mesma lógica se aplica a ChangeNotifierqualquer outro objeto observável.
     */
   }
 
@@ -89,6 +121,9 @@ class RouteAwareWidgetState extends State<RouteAwareWidget>
      Deactivate é chamado quando State é removido da árvore,
      mas pode ser reinserido antes que a alteração do quadro atual seja concluída.
      Esse método existe basicamente porque os objetos State podem ser movidos de um ponto a outro em uma árvore.
+     Quando State é removido da subárvore A e reinserido na subárvore B devido ao uso de a GlobalKey, apenas o deactivate() método do ciclo de vida é invocado, 
+     dispose() NÃO é chamado (portanto, State é apenas desativado, mas não descartado neste caso). 
+     Quando a State é permanentemente removido da árvore, deactivate() é chamado primeiro e depois dispose() é chamado depois.
      */
     super.deactivate();
   }
